@@ -1,0 +1,138 @@
+---
+title: "Albums Project 1"
+author: "Maggie Ma"
+date: "2024-09-23"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+# Top 500 Ranked Albums in 2020
+
+### This project will be using Rolling Stone's 2020 album rankings to determine how spotify popularity of an album is related to its Rolling Stone rank, genre, and weeks on billboard. Rolling Stone's rankings are determined by the medium by which the album is listened with, its popularity, and voting by judges. Learn more about how Rolling Stone's ranks are determined at <https://pudding.cool/2024/03/greatest-music/>.
+
+![](https://m.media-amazon.com/images/I/71P21Y5PckL._AC_UF350,350_QL50_.jpg)
+
+###### From *Rolling Stone*, the definitive and beautiful companion book to one of the most popular and hotly debated lists in the music world.
+
+```{r}
+setwd("C:/Users/maggi/OneDrive/Documents/SDS 313")
+library(ggplot2)
+library(tidyverse)
+albums <- read.csv("Project1_Albums.csv")
+#clean data
+albums$genre <- replace(albums$genre, albums$genre %in% 'Blues/Blues ROck', 'Blues/Blues Rock')
+albumstemp <- albums[((is.na(albums$genre)==FALSE) & (is.na(albums$weeks_on_billboard)==FALSE)),]
+albumscleaned <- albumstemp[(is.na(albumstemp$spotify_popularity)==FALSE),]
+albums_ggplot <- ggplot(albumscleaned)
+```
+
+# Outcome Variable
+
+```{r}
+albums_ggplot + geom_boxplot(aes(x = spotify_popularity)) +
+  #labels
+  labs(
+    title = "Spotify Popularity",
+    x = "Spotify Popularity Ranking"
+  ) +
+  #remove y axis
+  scale_y_continuous(labels = NULL)
+```
+
+```{r, results=FALSE}
+fivenum(albumscleaned$spotify_popularity)
+```
+
+Spotify popularity rankings for the top 500 albums had a median of 61, with 75% of the albums falling between 51 and 70.
+
+# Bivariate Analysis
+
+### Spotify Popularity vs Rolling Stone's Top 500 Rankings
+
+```{r}
+albums_ggplot + geom_point(aes(x=spotify_popularity, y=rank_2020)) +
+  #labels
+  labs(
+    title = "Relationship between Spotify Popularity and Rolling Stone's Top 500 Rankings",
+    x = "Spotify Popularity Ranking",
+    y = "Rolling Stone's Top 500 Ranking"
+  )
+```
+
+There is a very low relationship between the Spotify and Rolling Stone's rankings. The graph seems very scattered, and there is a correlation of `r cor(albumscleaned$spotify_popularity, albumscleaned$rank_2020)`.
+
+### Spotify Popularity by Genre
+
+```{r}
+albumscleaned |>
+  group_by(genre) |>
+  summarize(mean_spotifypop_by_genre = mean(spotify_popularity)) |>
+  ggplot() + geom_col(aes(x = mean_spotifypop_by_genre, y = genre)) +
+  labs(
+    title = "Mean Spotify Popularity Ranks by Genre",
+    x = "Mean Spotify Popularity Rank",
+    y = "Genre"
+  )
+```
+
+```{r, results=FALSE}
+albumscleaned |>
+  group_by(genre) |>
+  summarize(mean_spotifypop_by_genre = mean(spotify_popularity))
+```
+
+According to the graph and the table, the most popular genre on Spotify is Latin music, with a mean Spotify popularity of 78. However, the least popular genre on Spotify is Big Band/Jazz, with a mean Spotify popularity of 46.
+
+### Spotify Popularity vs Weeks on Billboard
+
+```{r}
+albums_ggplot + geom_point(aes(x=spotify_popularity, y=weeks_on_billboard)) +
+  #labels
+  labs(
+    title = "Relationship between Spotify Popularity and Number of Weeks on Billboard",
+    x = "Spotify Popularity Ranking",
+    y = "Weeks on Billboard"
+  )
+```
+
+There is a positive, moderate relationship between Spotify's rankings and weeks on billboard, with a correlation coefficient of `r cor(albumscleaned$spotify_popularity, albumscleaned$weeks_on_billboard)`. The graph shows that most of the albums had less than 200 weeks on billboard, but a few outliers had almost 600 weeks on billboard.
+
+### Spotify Popularity vs Rolling Stone's Top 500 Rankings by Genre
+
+```{r}
+albums_ggplot + geom_point(aes(x=spotify_popularity, y=rank_2020, color=genre)) +
+  #labels
+  labs(
+    title = "Relationship between Spotify Popularity and Rolling Stone's Top 500 Rankings",
+    x = "Spotify Popularity Ranking",
+    y = "Rolling Stone's Top 500 Ranking"
+  )
+```
+
+There is no pattern in the Spotify Popularity vs Rolling Stone Rankings graph when we filter it by genre.
+
+# Conclusion
+
+We found that although Rolling Stone considers these albums as the greatest 500 albums of all time, their ranks do not necessarily correlate with their Spotify popularity. Additionally, all of the genres have a mean Spotify popularity of around 40 to 70, and when looking at relationship between Spotify popularity and Rolling Stone rankings by genre, there is no apparent pattern in the genres either. Here is a list of the 500 albums Rolling Stone considers the greatest 500 albums of all time: <https://www.rollingstone.com/music/music-lists/best-albums-of-all-time-1062063/arcade-fire-%ef%bb%bffuneral-1062733/>. Some areas for future research could include finding patterns in popular genres in different parts of the world.
+
+## References
+
+Data from <https://github.com/rfordatascience/tidytuesday/blob/master/data/2024/2024-05-07/readme.md>
+
+# Choice Elements
+
+1.  Used in-line codes for correlation in bivariate analysis section
+2.  Included hyperlinks in intro and conclusion
+3.  Changed font size in titles
+4.  Floating table of contents
+5.  Subset eliminating N/As in setup
+6.  Multivariate plot at the end of bivariate analysis section
